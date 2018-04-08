@@ -17,6 +17,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -33,7 +34,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,11 +45,13 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private final int REQUEST_LOCATION = 0;
+    private final boolean DYNAMIC_LOCATION = false;
+
     private GoogleMap googleMap;
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
-    private final boolean DYNAMIC_LOCATION = false;
+    private Marker currentMarker;
 
     private static final String TAG = "MainActivity";
 
@@ -108,6 +114,61 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.googleMap = googleMap;
         if (! DYNAMIC_LOCATION) {
             Toast.makeText(this, "Using static location", Toast.LENGTH_LONG).show();
+            if (this.googleMap != null) {
+
+                googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+                    @Override
+                    public void onMarkerDragStart(Marker marker) {
+
+                    }
+
+                    @Override
+                    public void onMarkerDrag(Marker marker) {
+
+                    }
+
+                    @Override
+                    public void onMarkerDragEnd(Marker marker) {
+                        Geocoder gc = new Geocoder(MainActivity.this);
+                        LatLng ll = marker.getPosition();
+                        List<Address> list;
+                        try {
+                            list = gc.getFromLocation(ll.latitude, ll.longitude, 1);
+                        }
+                        catch (IOException e) {
+                            Log.e(TAG, "onMarkerDragEnd: IOException", e);
+                            e.printStackTrace();
+                            return;
+                        }
+                        Address add = list.get(0);
+                        marker.setTitle(add.getLocality());
+                        marker.showInfoWindow();
+                    }
+                });
+
+                this.googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+                    @Override
+                    public View getInfoWindow(Marker marker) {
+                        return null;
+                    }
+
+                    @Override
+                    public View getInfoContents(Marker marker) {
+                        View view = getLayoutInflater().inflate(R.layout.info_window, null);
+                        TextView tv_locality = (TextView) view.findViewById(R.id.textView_locality);
+                        TextView tv_lat = (TextView) view.findViewById(R.id.textView_lat);
+                        TextView tv_lng = (TextView) view.findViewById(R.id.textView_long);
+                        TextView tv_snippet = (TextView) view.findViewById(R.id.textView_snippet);
+
+                        LatLng ll = marker.getPosition();
+                        tv_locality.setText(marker.getTitle());
+                        tv_lat.setText("" + ll.latitude);
+                        tv_lng.setText("" + ll.longitude);
+                        tv_snippet.setText(marker.getSnippet());
+                        return view;
+                    }
+                });
+            }
             gotoLocation(45.1430026, 5.8401512);
         }
         else {
@@ -174,7 +235,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             double lat = address.getLatitude();
             double lng = address.getLongitude();
             gotoLocationZoom(lat, lng, 17);
+
+            setMarker(locality, lat, lng);
         }
+    }
+
+    private void setMarker(String locality, double lat, double lng) {
+        if (currentMarker != null) {
+            currentMarker.remove();
+        }
+
+        MarkerOptions markerOptions = new MarkerOptions()
+                .title(locality)
+                .draggable(true)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                .position(new LatLng(lat, lng))
+                .snippet("I wiz here");
+        currentMarker = googleMap.addMarker(markerOptions);
     }
 
     @Override
