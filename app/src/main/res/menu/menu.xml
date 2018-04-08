@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.brebner.anotherlocationapp.MainActivity">
+
+    <item
+        android:id="@+id/menuMapTypeNone"
+        android:title="@string/map_type_none" />
+    <item
+        android:id="@+id/menuMapTypeNormal"
+        android:title="@string/map_type_normal" />
+    <item
+        android:id="@+id/menuMapTypeTerrain"
+        android:title="@string/map_type_terrain" />
+    <item
+        android:id="@+id/menuMapTypeSatellite"
+        android:title="@string/map_type_satellite" />
+    <item
+        android:id="@+id/menuMapTypeHybrid"
+        android:title="@string/map_type_hybrid" />
+</menu>
